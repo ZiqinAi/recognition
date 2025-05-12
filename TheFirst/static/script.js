@@ -1,0 +1,327 @@
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取DOM元素
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const imageInput = document.getElementById('imageInput');
+    const previewImage = document.getElementById('previewImage');
+    const executeOcrBtn = document.getElementById('executeOcrBtn');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const zoomValue = document.getElementById('zoomValue');
+    const saveSettingsCheck = document.getElementById('saveSettingsCheck');
+    const logBox = document.getElementById('logBox');
+    const ocrResultBox = document.getElementById('ocrResultBox');
+    const ocrTable = document.getElementById('ocrTable').getElementsByTagName('tbody')[0];
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalImage = document.getElementById('modalImage');
+    
+    // 变量
+    let currentImagePath = null;
+    let currentFullPath = null;
+    let currentImageId = null;
+    let currentScale = 1;
+    
+    // 添加日志的函数
+    function addLog(message, isError = false) {
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry' + (isError ? ' log-error' : '');
+        logEntry.textContent = message;
+        logBox.appendChild(logEntry);
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+    
+    // 清除OCR结果表格
+    function clearOcrTable() {
+        ocrTable.innerHTML = '';
+    }
+    
+    // 选择文件按钮点击事件
+    selectFileBtn.addEventListener('click', function() {
+        imageInput.click();
+    });
+    
+    // 文件选择变更事件
+    imageInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            
+            // 显示加载指示器
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            document.getElementById('imageContainer').appendChild(loadingDiv);
+            
+            addLog(`选择文件: ${file.name}`);
+            
+            // 创建FormData对象并添加文件
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            // 发送文件上传请求
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 移除加载指示器
+                loadingDiv.remove();
+                
+                if (data.error) {
+                    addLog(`上传错误: ${data.error}`, true);
+                    return;
+                }
+                
+                // 显示上传的图像
+                currentImagePath = data.image_path;
+                currentFullPath = data.full_path;  // 保存完整路径
+                currentImageId = data.image_id;    // 保存图片ID
+                previewImage.src = currentImagePath;
+                addLog(`文件上传成功: ${currentImagePath}`);
+                
+                // 启用OCR按钮
+                executeOcrBtn.disabled = false;
+            })
+            .catch(error => {
+                // 移除加载指示器
+                loadingDiv.remove();
+                addLog(`上传异常: ${error.message}`, true);
+            });
+        }
+    });
+    
+    // 缩放滑块事件
+    zoomSlider.addEventListener('input', function() {
+        currentScale = this.value / 100;
+        zoomValue.textContent = `${this.value}%`;
+        previewImage.style.transform = `scale(${currentScale})`;
+    });
+    
+    // 执行OCR按钮点击事件
+    executeOcrBtn.addEventListener('click', function() {
+        if (!currentImagePath) {
+            addLog('错误: 未选择图像文件', true);
+            return;
+        }
+        
+        // 收集设置参数
+        const apiToken = document.getElementById('apiTokenInput').value;
+        const email = document.getElementById('emailInput').value;
+        const detMode = document.getElementById('detModeSelect').value;
+        const charOcr = document.querySelector('input[name="detMode"]:checked').value === 'true';
+        const imageSize = parseInt(document.getElementById('imageSizeInput').value);
+        const version = document.getElementById('versionSelect').value;
+        const saveSettings = saveSettingsCheck.checked;
+        
+        // 验证必要参数
+        if (!apiToken) {
+            addLog('错误: 请输入API Token', true);
+            return;
+        }
+        
+        if (!email) {
+            addLog('错误: 请输入邮箱地址', true);
+            return;
+        }
+        
+         // 添加当前识别参数信息到日志
+        const versionText = version === 'default' ? '标准版本' : '古籍语序优化版本';
+        const detModeText = detMode === 'sp' ? '竖排' : (detMode === 'hp' ? '横排' : '自动');
+        const detTypeText = charOcr ? '单字检测识别' : '文本行检测识别';
+        
+        addLog(`识别参数信息:`);
+        addLog(`- 识别版本: ${versionText}`);
+        addLog(`- 文字排版方向: ${detModeText}`);
+        addLog(`- 检测模式: ${detTypeText}`);
+        addLog(`- 图片尺寸: ${imageSize}px`);
+
+        // 保存设置
+        if (saveSettings) {
+            saveAppSettings({
+                api_token: apiToken,
+                email: email,
+                det_mode: detMode,
+                image_size: imageSize,
+                char_ocr: charOcr,
+                return_position: true,
+                return_choices: true,
+                version: version
+            });
+        }
+        
+        // 显示加载指示器
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        document.getElementById('imageContainer').appendChild(loadingDiv);
+        
+        addLog('开始执行OCR处理...');
+        
+        // 准备OCR请求数据
+        const ocrData = {
+            image_path: currentImagePath,
+            full_path: currentFullPath,  // 添加完整路径
+            image_id: currentImageId,    // 添加图片ID
+            api_token: apiToken,         // 使用API Token
+            email: email,                // 使用API 邮箱地址
+            det_mode: detMode,           // 检测模式
+            image_size: imageSize,       // 图像大小
+            char_ocr: charOcr,           // 单字识别
+            return_position: true,       // 返回位置信息
+            return_choices: true,        // 返回选项信息
+            version: version             // 版本
+        };
+        
+        // 发送OCR请求
+        fetch('/api/ocr', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(ocrData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 移除加载指示器
+            loadingDiv.remove();
+            
+            if (data.error) {
+                addLog(`OCR处理错误: ${data.error}`, true);
+                return;
+            }
+            
+            // 处理OCR结果
+            processOcrResult(data);
+            addLog('OCR处理完成');
+        })
+        .catch(error => {
+            // 移除加载指示器
+            loadingDiv.remove();
+            addLog(`OCR处理异常: ${error.message}`, true);
+        });
+    });
+    
+    // 保存应用设置
+    function saveAppSettings(settings) {
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addLog('设置已保存');
+            } else {
+                addLog(`保存设置失败: ${data.message}`, true);
+            }
+        })
+        .catch(error => {
+            addLog(`保存设置异常: ${error.message}`, true);
+        });
+    }
+    
+    // 处理OCR结果数据
+    function processOcrResult(data) {
+        // 更新预览图为处理后的图像
+        previewImage.src = data.processed_image;
+        
+        // 清除原有OCR结果
+        ocrResultBox.innerHTML = '';
+        clearOcrTable();
+        
+        // 显示文本内容结果
+        if (data.ocr_result && data.ocr_result.data && data.ocr_result.data.text_lines) {
+            let textContent = '';
+            
+            // 根据排版方向调整显示
+            const isVertical = data.ocr_result.data.det_mode === 'sp';
+            
+            if (isVertical) {
+                // 竖排文字，从右到左排列
+                const linesArray = data.ocr_result.data.text_lines.map(line => line.text);
+                // 按列排序
+                linesArray.sort((a, b) => {
+                    const posA = a.position ? a.position[0][0] : 0;
+                    const posB = b.position ? b.position[0][0] : 0;
+                    return posB - posA; // 从右到左
+                });
+                
+                textContent = linesArray.join('\n');
+            } else {
+                // 横排文字，直接拼接
+                data.ocr_result.data.text_lines.forEach(line => {
+                    textContent += line.text + '\n';
+                });
+            }
+            
+            // 创建显示元素
+            const textElement = document.createElement('pre');
+            textElement.className = 'ocr-text';
+            textElement.textContent = textContent;
+            ocrResultBox.appendChild(textElement);
+        }
+        
+        // 显示单字识别结果
+        if (data.words_data && data.words_data.length > 0) {
+            data.words_data.forEach(word => {
+                const row = ocrTable.insertRow();
+                
+                // 图像单元格
+                const imgCell = row.insertCell(0);
+                const img = document.createElement('img');
+                img.src = word.image;
+                img.alt = word.text;
+                img.addEventListener('click', function() {
+                    modalImage.src = this.src;
+                    imageModal.show();
+                });
+                imgCell.appendChild(img);
+                
+                // 文本单元格
+                const textCell = row.insertCell(1);
+                textCell.textContent = word.text;
+                
+                // 置信度单元格
+                const confCell = row.insertCell(2);
+                const confidence = Math.round(word.confidence * 100);
+                confCell.textContent = `${confidence}%`;
+                
+                // 根据置信度设置颜色
+                if (confidence >= 80) {
+                    confCell.className = 'confidence-good';
+                } else if (confidence >= 50) {
+                    confCell.className = 'confidence-medium';
+                } else {
+                    confCell.className = 'confidence-bad';
+                }
+            });
+        }
+    }
+    
+    // 初始化函数
+    function init() {
+        // 加载设置
+        fetch('/api/settings')
+        .then(response => response.json())
+        .then(settings => {
+            // 填充设置表单
+            document.getElementById('apiTokenInput').value = settings.api_token || '';
+            document.getElementById('emailInput').value = settings.email || '';
+            document.getElementById('detModeSelect').value = settings.det_mode || 'sp';
+            document.getElementById('imageSizeInput').value = settings.image_size || 1024;
+            document.getElementById('versionSelect').value = settings.version || 'default';
+            
+            // 设置检测模式单选按钮
+            const charOcr = settings.char_ocr !== undefined ? settings.char_ocr : true;
+            document.getElementById(charOcr ? 'charDetRadio' : 'lineDetRadio').checked = true;
+            
+            addLog('设置已加载');
+        })
+        .catch(error => {
+            addLog(`加载设置异常: ${error.message}`, true);
+        });
+    }
+    
+    // 初始化应用
+    init();
+});

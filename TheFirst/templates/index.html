@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>孔子世家手写字识别 - Demo </title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="text-center py-3">
+            <h2>孔子世家文书手写字识别 - 网页版</h2>
+        </header>
+        
+        <div class="row main-content">
+            <!-- 左侧设置区域 -->
+            <div class="col-md-3 settings-area">
+                <div class="card">
+                    <div class="card-header">设置</div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div class="mb-3">
+                                <button type="button" id="selectFileBtn" class="btn btn-primary w-100">选择文件</button>
+                                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                            </div>
+                            <div class="mb-3">
+                                <label for="apiTokenInput" class="form-label">API Token:</label>
+                                <input type="text" class="form-control" id="apiTokenInput" value="{{ settings.api_token }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailInput" class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="emailInput" value="{{ settings.email }}">
+                            </div>
+                            <div class="mb-3">
+                            <label for="versionSelect" class="form-label">识别版本:</label>
+                            <select class="form-select" id="versionSelect">
+                                <option value="default" {% if settings.version == 'default' %}selected{% endif %}>标准版本</option>
+                                <option value="beta" {% if settings.version == 'beta' %}selected{% endif %}>古籍语序优化版本</option>
+                            </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="detModeSelect" class="form-label">文字排版方向:</label>
+                                <select class="form-select" id="detModeSelect">
+                                    <option value="auto" {% if settings.det_mode == 'auto' %}selected{% endif %}>自动</option>
+                                    <option value="sp" {% if settings.det_mode == 'sp' %}selected{% endif %}>竖排</option>
+                                    <option value="hp" {% if settings.det_mode == 'hp' %}selected{% endif %}>横排</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">检测模式:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="detMode" id="charDetRadio" value="true" {% if settings.char_ocr %}checked{% endif %}>
+                                    <label class="form-check-label" for="charDetRadio">单字检测识别</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="detMode" id="lineDetRadio" value="false" {% if not settings.char_ocr %}checked{% endif %}>
+                                    <label class="form-check-label" for="lineDetRadio">文本行检测识别</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imageSizeInput" class="form-label">图片尺寸调节:</label>
+                                <input type="number" class="form-control" id="imageSizeInput" value="{{ settings.image_size }}">
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="saveSettingsCheck" checked>
+                                <label class="form-check-label" for="saveSettingsCheck">保存设置</label>
+                            </div>
+                            <button type="button" id="executeOcrBtn" class="btn btn-success w-100" disabled>执行OCR</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">运行日志</div>
+                    <div class="card-body">
+                        <div id="logBox" class="log-box"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中间图片显示区域 -->
+            <div class="col-md-5 image-area">
+                <div class="card h-100">
+                    <div class="card-header">图片预览</div>
+                    <div class="card-body image-viewer">
+                        <div id="imageContainer" class="image-container">
+                            <img id="previewImage" class="preview-image" src="..\static\images\placeholder.jpg" alt="预览图">
+                        </div>
+                        <div class="zoom-controls mt-2">
+                            <input type="range" class="form-range" id="zoomSlider" min="1" max="200" value="100">
+                            <div class="d-flex justify-content-between">
+                                <span>缩小</span>
+                                <span id="zoomValue">100%</span>
+                                <span>放大</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧OCR结果区域 -->
+            <div class="col-md-4 results-area">
+                <div class="card">
+                    <div class="card-header">OCR内容</div>
+                    <div class="card-body">
+                        <div id="ocrResultBox" class="ocr-result-box"></div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">单字识别结果</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" id="ocrTable">
+                              <thead>
+                                <tr>
+                                  <th>图像</th>
+                                  <th>OCR内容</th>
+                                  <th>置信度</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <!-- 动态填充OCR结果 -->
+                              </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图片查看弹窗 -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">图片查看</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" class="img-fluid" src="" alt="放大图片">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/script.js"></script>
+</body>
+</html>

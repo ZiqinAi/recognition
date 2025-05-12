@@ -1,0 +1,198 @@
+/* 全局样式 */
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.container-fluid {
+    max-width: 1800px;
+    padding: 15px;
+}
+
+/* 页头样式 */
+header {
+    background-color: #3498db;
+    color: white;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* 主要内容区样式 */
+.main-content {
+    min-height: calc(100vh - 120px);
+}
+
+/* 卡片样式 */
+.card {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 5px;
+}
+
+.card-header {
+    background-color: #4a89dc;
+    color: white;
+    font-weight: bold;
+}
+
+/* 设置区域 */
+.settings-area .card-body {
+    max-height: none;
+    overflow-y: auto;
+}
+
+/* 图片预览区域 */
+.image-area .card {
+    height: 100%;
+}
+
+.image-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.image-container {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9e9e9;
+    border-radius: 5px;
+    position: relative;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+/* 日志框 */
+.log-box {
+    height: 200px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 10px;
+    font-family: Consolas, monospace;
+    font-size: 0.85rem;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #eee;
+}
+
+.log-error {
+    color: #dc3545;
+}
+
+/* OCR结果框 */
+.ocr-result-box {
+    height: 350px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+/* OCR表格 */
+#ocrTable img {
+    max-height: 50px;
+    max-width: 100px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#ocrTable img:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+
+/* 缩放控制 */
+.zoom-controls {
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+    .main-content > div {
+        margin-bottom: 15px;
+    }
+    
+    .image-area .card {
+        height: 500px;
+    }
+}
+
+/* 加载指示器 */
+.loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.loading::after {
+    content: "";
+    width: 40px;
+    height: 40px;
+    border: 5px solid #3498db;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 处理图片加载失败的样式 */
+.preview-image {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    margin: 0 auto; /* 居中显示 */
+}
+
+.preview-image:empty {
+    background: url('./images/placeholder.jpg') no-repeat center center;
+    background-size: contain;
+}
+
+/* 单字识别结果表格 */
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#ocrTable .confidence-good {
+    color: #28a745;
+}
+
+#ocrTable .confidence-medium {
+    color: #ffc107;
+}
+
+#ocrTable .confidence-bad {
+    color: #dc3545;
+}
