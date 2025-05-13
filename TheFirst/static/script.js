@@ -7,12 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const executeOcrBtn = document.getElementById('executeOcrBtn');
     const zoomSlider = document.getElementById('zoomSlider');
     const zoomValue = document.getElementById('zoomValue');
-    const saveSettingsCheck = document.getElementById('saveSettingsCheck');
     const logBox = document.getElementById('logBox');
     const ocrResultBox = document.getElementById('ocrResultBox');
     const ocrTable = document.getElementById('ocrTable').getElementsByTagName('tbody')[0];
     const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
     const modalImage = document.getElementById('modalImage');
+    
+    // 图像预处理相关元素
+    const preprocessToggle = document.getElementById('preprocessToggle');
+    const preprocessOptions = document.getElementById('preprocessOptions');
     
     // 变量
     let currentImagePath = null;
@@ -95,6 +98,16 @@ document.addEventListener('DOMContentLoaded', function() {
         previewImage.style.transform = `scale(${currentScale})`;
     });
     
+    // 预处理选项切换
+    preprocessToggle.addEventListener('change', function() {
+        const options = document.querySelectorAll('.preprocess-option');
+        if (this.checked) {
+            options.forEach(option => option.disabled = false);
+        } else {
+            options.forEach(option => option.disabled = true);
+        }
+    });
+    
     // 执行OCR按钮点击事件
     executeOcrBtn.addEventListener('click', function() {
         if (!currentImagePath) {
@@ -103,26 +116,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 收集设置参数
-        const apiToken = document.getElementById('apiTokenInput').value;
-        const email = document.getElementById('emailInput').value;
         const detMode = document.getElementById('detModeSelect').value;
         const charOcr = document.querySelector('input[name="detMode"]:checked').value === 'true';
         const imageSize = parseInt(document.getElementById('imageSizeInput').value);
         const version = document.getElementById('versionSelect').value;
-        const saveSettings = saveSettingsCheck.checked;
         
-        // 验证必要参数
-        if (!apiToken) {
-            addLog('错误: 请输入API Token', true);
-            return;
-        }
+        // 获取预处理选项
+        const preprocessing = preprocessToggle.checked;
+        const preprocess_options = {
+            auto_deskew: preprocessing && document.getElementById('autoDeskewCheck').checked,
+            enhance_contrast: preprocessing && document.getElementById('contrastCheck').checked,
+            noise_reduction: preprocessing && document.getElementById('noiseCheck').checked,
+            sharpen: preprocessing && document.getElementById('sharpenCheck').checked
+        };
         
-        if (!email) {
-            addLog('错误: 请输入邮箱地址', true);
-            return;
-        }
-        
-         // 添加当前识别参数信息到日志
+        // 添加当前识别参数信息到日志
         const versionText = version === 'default' ? '标准版本' : '古籍语序优化版本';
         const detModeText = detMode === 'sp' ? '竖排' : (detMode === 'hp' ? '横排' : '自动');
         const detTypeText = charOcr ? '单字检测识别' : '文本行检测识别';
@@ -132,19 +140,13 @@ document.addEventListener('DOMContentLoaded', function() {
         addLog(`- 文字排版方向: ${detModeText}`);
         addLog(`- 检测模式: ${detTypeText}`);
         addLog(`- 图片尺寸: ${imageSize}px`);
-
-        // 保存设置
-        if (saveSettings) {
-            saveAppSettings({
-                api_token: apiToken,
-                email: email,
-                det_mode: detMode,
-                image_size: imageSize,
-                char_ocr: charOcr,
-                return_position: true,
-                return_choices: true,
-                version: version
-            });
+        addLog(`- 图像预处理: ${preprocessing ? '开启' : '关闭'}`);
+        
+        if (preprocessing) {
+            addLog(`  - 自动校正倾斜: ${preprocess_options.auto_deskew ? '是' : '否'}`);
+            addLog(`  - 增强对比度: ${preprocess_options.enhance_contrast ? '是' : '否'}`);
+            addLog(`  - 降噪处理: ${preprocess_options.noise_reduction ? '是' : '否'}`);
+            addLog(`  - 锐化处理: ${preprocess_options.sharpen ? '是' : '否'}`);
         }
         
         // 显示加载指示器
@@ -157,16 +159,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // 准备OCR请求数据
         const ocrData = {
             image_path: currentImagePath,
-            full_path: currentFullPath,  // 添加完整路径
-            image_id: currentImageId,    // 添加图片ID
-            api_token: apiToken,         // 使用API Token
-            email: email,                // 使用API 邮箱地址
-            det_mode: detMode,           // 检测模式
-            image_size: imageSize,       // 图像大小
-            char_ocr: charOcr,           // 单字识别
-            return_position: true,       // 返回位置信息
-            return_choices: true,        // 返回选项信息
-            version: version             // 版本
+            full_path: currentFullPath,       // 添加完整路径
+            image_id: currentImageId,         // 添加图片ID
+            det_mode: detMode,                // 检测模式
+            image_size: imageSize,            // 图像大小
+            char_ocr: charOcr,                // 单字识别
+            return_position: true,            // 返回位置信息
+            return_choices: true,             // 返回选项信息
+            version: version,                 // 版本
+            preprocess: preprocessing,        // 预处理开关
+            preprocess_options: preprocess_options // 预处理选项
         };
         
         // 发送OCR请求
@@ -198,32 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 保存应用设置
-    function saveAppSettings(settings) {
-        fetch('/api/settings', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(settings)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                addLog('设置已保存');
-            } else {
-                addLog(`保存设置失败: ${data.message}`, true);
-            }
-        })
-        .catch(error => {
-            addLog(`保存设置异常: ${error.message}`, true);
-        });
-    }
-    
     // 处理OCR结果数据
     function processOcrResult(data) {
         // 更新预览图为处理后的图像
-        previewImage.src = data.processed_image;
+        if (data.processed_image) {
+            previewImage.src = data.processed_image;
+        }
         
         // 清除原有OCR结果
         ocrResultBox.innerHTML = '';
@@ -300,13 +282,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化函数
     function init() {
+        // 初始化预处理选项状态
+        if (preprocessToggle.checked) {
+            document.querySelectorAll('.preprocess-option').forEach(option => option.disabled = false);
+        } else {
+            document.querySelectorAll('.preprocess-option').forEach(option => option.disabled = true);
+        }
+        
         // 加载设置
         fetch('/api/settings')
         .then(response => response.json())
         .then(settings => {
             // 填充设置表单
-            document.getElementById('apiTokenInput').value = settings.api_token || '';
-            document.getElementById('emailInput').value = settings.email || '';
             document.getElementById('detModeSelect').value = settings.det_mode || 'sp';
             document.getElementById('imageSizeInput').value = settings.image_size || 1024;
             document.getElementById('versionSelect').value = settings.version || 'default';
@@ -314,6 +301,35 @@ document.addEventListener('DOMContentLoaded', function() {
             // 设置检测模式单选按钮
             const charOcr = settings.char_ocr !== undefined ? settings.char_ocr : true;
             document.getElementById(charOcr ? 'charDetRadio' : 'lineDetRadio').checked = true;
+            
+            // 设置预处理选项
+            if (settings.preprocess !== undefined) {
+                preprocessToggle.checked = settings.preprocess;
+                if (settings.preprocess_options) {
+                    document.getElementById('autoDeskewCheck').checked = 
+                        settings.preprocess_options.auto_deskew !== undefined ? 
+                        settings.preprocess_options.auto_deskew : true;
+                    
+                    document.getElementById('contrastCheck').checked = 
+                        settings.preprocess_options.enhance_contrast !== undefined ? 
+                        settings.preprocess_options.enhance_contrast : true;
+                    
+                    document.getElementById('noiseCheck').checked = 
+                        settings.preprocess_options.noise_reduction !== undefined ? 
+                        settings.preprocess_options.noise_reduction : true;
+                    
+                    document.getElementById('sharpenCheck').checked = 
+                        settings.preprocess_options.sharpen !== undefined ? 
+                        settings.preprocess_options.sharpen : true;
+                }
+                
+                // 更新预处理选项可用状态
+                if (preprocessToggle.checked) {
+                    document.querySelectorAll('.preprocess-option').forEach(option => option.disabled = false);
+                } else {
+                    document.querySelectorAll('.preprocess-option').forEach(option => option.disabled = true);
+                }
+            }
             
             addLog('设置已加载');
         })
