@@ -60,8 +60,8 @@ class ConfigManager:
         else:
             # 创建默认配置
             self.config['General'] = {
-                'api_token': '',
-                'email': '',
+                'api_token': 'f410f863-24d8-4fdb-8383-79616b631bfe',
+                'email': '13399649125',
                 'det_mode': 'sp',
                 'image_size': '1024',
                 'char_ocr': 'true',
@@ -82,8 +82,8 @@ class ConfigManager:
             self.config['General'] = {}
             
         return {
-            'api_token': self.config['General'].get('api_token', ''),
-            'email': self.config['General'].get('email', ''),
+            'api_token': self.config['General'].get('api_token', 'f410f863-24d8-4fdb-8383-79616b631bfe'),
+            'email': self.config['General'].get('email', '13399649125'),
             'det_mode': self.config['General'].get('det_mode', 'sp'),
             'image_size': int(self.config['General'].get('image_size', '1024')),
             'char_ocr': self.config['General'].get('char_ocr', 'true').lower() == 'true',
@@ -541,8 +541,8 @@ def handle_settings():
     if request.method == 'POST':
         data = request.json
         settings = {
-            'api_token': data.get('api_token', ''),
-            'email': data.get('email', ''),
+            'api_token': data.get('api_token', 'f410f863-24d8-4fdb-8383-79616b631bfe'),
+            'email': data.get('email', '13399649125'),
             'det_mode': data.get('det_mode', 'sp'),
             'image_size': data.get('image_size', 1024),
             'char_ocr': data.get('char_ocr', True),
@@ -706,8 +706,8 @@ def process_ocr():
                     # 将预处理的图像路径返回给前端
                     preprocessed_path = preprocess_result['preprocessed_image_path']
             
-        api_token = data.get('api_token', '')
-        email = data.get('email', '')
+        api_token = data.get('api_token', 'f410f863-24d8-4fdb-8383-79616b631bfe')
+        email = data.get('email', '13399649125')
         det_mode = data.get('det_mode', 'auto')
         image_size = int(data.get('image_size', 1024))
         char_ocr = data.get('char_ocr', True)
