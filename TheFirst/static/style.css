@@ -1,8 +1,9 @@
 /* 全局样式 */
 body {
-    font-family: 'Microsoft YaHei', sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+    font-family: 'Noto Serif SC', 'Microsoft YaHei', serif;
+    background-color: #f8f5f0;
+    color: #463020;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d2c8b5' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 .container-fluid {
@@ -12,11 +13,25 @@ body {
 
 /* 页头样式 */
 header {
-    background-color: #3498db;
-    color: white;
+    background-color: #8b5a2b;
+    color: #f1e6d9;
     border-radius: 5px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f1e6d9' fill-opacity='0.15'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.traditional-title {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.header-subtitle {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-top: 5px;
 }
 
 /* 主要内容区样式 */
@@ -26,15 +41,88 @@ header {
 
 /* 卡片样式 */
 .card {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     border: none;
     border-radius: 5px;
+    background-color: #fcf9f5;
+    border-top: 3px solid #8b5a2b;
 }
 
 .card-header {
-    background-color: #4a89dc;
-    color: white;
+    background-color: #dfd3c3;
+    color: #5d4037;
     font-weight: bold;
+    border-bottom: 1px solid #c9b8a6;
+}
+
+.setting-card .card-header {
+    background-color: #8b5a2b;
+    color: #f1e6d9;
+}
+
+.result-card .card-header {
+    background-color: #5d4037;
+    color: #f1e6d9;
+}
+
+/* 子卡片样式 */
+.sub-card {
+    box-shadow: none;
+    border: 1px solid #dfd3c3;
+}
+
+.sub-header {
+    background-color: #f1e6d9;
+    color: #5d4037;
+    padding: 8px 12px;
+}
+
+/* 表单元素样式 */
+.form-control, .form-select {
+    border-color: #dfd3c3;
+    background-color: #fcf9f5;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #8b5a2b;
+    box-shadow: 0 0 0 0.25rem rgba(139, 90, 43, 0.25);
+}
+
+.traditional-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%238b5a2b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: #5d4037;
+    border-color: #5d4037;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #4e342e;
+    border-color: #4e342e;
+}
+
+.btn-success {
+    background-color: #8b5a2b;
+    border-color: #8b5a2b;
+}
+
+.btn-success:hover, .btn-success:focus {
+    background-color: #6d4c2a;
+    border-color: #6d4c2a;
+}
+
+/* 文件选择按钮图标 */
+.scroll-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M13 3H6v18h12V9h-5V3zM8 17V7h3v2h2V7h1v10H8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    vertical-align: text-top;
 }
 
 /* 设置区域 */
@@ -60,9 +148,10 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #e9e9e9;
+    background-color: #f1e6d9;
     border-radius: 5px;
     position: relative;
+    border: 1px dashed #dfd3c3;
 }
 
 .preview-image {
@@ -76,52 +165,73 @@ header {
 .log-box {
     height: 200px;
     overflow-y: auto;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
+    background-color: #f8f5f0;
+    border: 1px solid #dfd3c3;
     border-radius: 3px;
     padding: 10px;
-    font-family: Consolas, monospace;
+    font-family: 'Noto Serif SC', Consolas, monospace;
     font-size: 0.85rem;
 }
 
 .log-entry {
     margin-bottom: 5px;
     padding-bottom: 5px;
-    border-bottom: 1px dotted #eee;
+    border-bottom: 1px dotted #dfd3c3;
 }
 
 .log-error {
-    color: #dc3545;
+    color: #b71c1c;
 }
 
 /* OCR结果框 */
 .ocr-result-box {
     height: 350px;
     overflow-y: auto;
-    background-color: #fff;
-    border: 1px solid #ddd;
+    background-color: #fcf9f5;
+    border: 1px solid #dfd3c3;
     border-radius: 3px;
     padding: 10px;
+    font-family: 'Noto Serif SC', serif;
+    line-height: 1.8;
+    letter-spacing: 1px;
 }
 
 /* OCR表格 */
+#ocrTable {
+    border-color: #dfd3c3;
+}
+
+#ocrTable th {
+    background-color: #f1e6d9;
+    color: #5d4037;
+}
+
 #ocrTable img {
     max-height: 50px;
     max-width: 100px;
     cursor: pointer;
     transition: transform 0.2s;
+    border: 1px solid #dfd3c3;
 }
 
 #ocrTable img:hover {
     transform: scale(1.1);
     transition: transform 0.2s ease-in-out;
+    box-shadow: 0 0 5px rgba(139, 90, 43, 0.3);
 }
-
 
 /* 缩放控制 */
 .zoom-controls {
     padding: 10px 0;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #dfd3c3;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #8b5a2b;
+}
+
+.form-range::-moz-range-thumb {
+    background: #8b5a2b;
 }
 
 /* 响应式调整 */
@@ -142,7 +252,7 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(252, 249, 245, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -153,7 +263,7 @@ header {
     content: "";
     width: 40px;
     height: 40px;
-    border: 5px solid #3498db;
+    border: 5px solid #8b5a2b;
     border-radius: 50%;
     border-top-color: transparent;
     animation: spin 1s linear infinite;
@@ -186,13 +296,13 @@ header {
 }
 
 #ocrTable .confidence-good {
-    color: #28a745;
+    color: #2e7d32;
 }
 
 #ocrTable .confidence-medium {
-    color: #ffc107;
+    color: #ff8f00;
 }
 
 #ocrTable .confidence-bad {
-    color: #dc3545;
+    color: #c62828;
 }
