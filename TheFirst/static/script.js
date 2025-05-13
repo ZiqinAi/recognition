@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ocrTable = document.getElementById('ocrTable').getElementsByTagName('tbody')[0];
     const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
     const modalImage = document.getElementById('modalImage');
+    const useDefaultImgBtn = document.getElementById('useDefaultImgBtn'); // 新增默认图像按钮
     
     // 图像预处理相关元素
     const preprocessToggle = document.getElementById('preprocessToggle');
@@ -22,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFullPath = null;
     let currentImageId = null;
     let currentScale = 1;
+    const defaultImagePath = 'TheFirst/static/images/placeholder.jpg'; // 默认图像路径
+    const default_image_path = 'static/images/placeholder.jpg' // 默认图像路径
+
     
     // 添加日志的函数
     function addLog(message, isError = false) {
@@ -41,6 +45,87 @@ document.addEventListener('DOMContentLoaded', function() {
     selectFileBtn.addEventListener('click', function() {
         imageInput.click();
     });
+    
+    // 使用默认图像按钮点击事件
+    useDefaultImgBtn.addEventListener('click', function() {
+        // 记录当前默认图像信息
+        currentImagePath = default_image_path;
+        
+        // 注册默认图像
+        registerDefaultImage();
+    });
+    
+    // 注册默认图像函数
+    function registerDefaultImage() {
+        // 显示加载指示器
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        document.getElementById('imageContainer').appendChild(loadingDiv);
+        
+        addLog('使用默认样例图像');
+        
+        // 设置默认图像信息，无需API调用
+        currentImagePath = default_image_path;  // 图像显示路径
+        currentFullPath = defaultImagePath;  // 图像运行路径
+        currentImageId = 'default_sample';   // 使用固定ID标识默认图像
+        
+        // 确保显示默认图像
+        previewImage.src = currentImagePath;
+        
+        // 短暂延迟以便用户看到加载过程
+        setTimeout(() => {
+            // 移除加载指示器
+            loadingDiv.remove();
+            
+            // 启用OCR按钮
+            executeOcrBtn.disabled = false;
+            addLog('默认样例图像已准备就绪，可以开始识别');
+        }, 500);
+        
+        /* 以下注释掉API调用代码，因为后端未实现该API
+        // 发送注册默认图像请求
+        fetch('/api/register_default', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ default_image: true })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 移除加载指示器
+            loadingDiv.remove();
+            
+            if (data.error) {
+                addLog(`注册默认图像错误: ${data.error}`, true);
+                return;
+            }
+            
+            // 更新图像信息
+            currentImagePath = data.image_path || defaultImagePath;
+            currentFullPath = data.full_path;  // 保存完整路径
+            currentImageId = data.image_id;    // 保存图片ID
+            
+            // 确保显示默认图像
+            previewImage.src = currentImagePath;
+            addLog(`默认图像已注册: ${data.image_id}`);
+            
+            // 启用OCR按钮
+            executeOcrBtn.disabled = false;
+        })
+        .catch(error => {
+            // 移除加载指示器
+            loadingDiv.remove();
+            addLog(`注册默认图像异常: ${error.message}`, true);
+            
+            // 应急处理 - 直接启用OCR按钮
+            // 这允许在后端API不支持的情况下仍能继续
+            currentImagePath = defaultImagePath;
+            executeOcrBtn.disabled = false;
+            addLog('已启用样例图像识别功能');
+        });
+        */
+    }
     
     // 文件选择变更事件
     imageInput.addEventListener('change', function(e) {
@@ -168,7 +253,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return_choices: true,             // 返回选项信息
             version: version,                 // 版本
             preprocess: preprocessing,        // 预处理开关
-            preprocess_options: preprocess_options // 预处理选项
+            preprocess_options: preprocess_options, // 预处理选项
+            is_default_image: currentImagePath === defaultImagePath // 标记是否为默认图像
         };
         
         // 发送OCR请求
