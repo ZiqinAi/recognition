@@ -39,6 +39,7 @@ header {
     min-height: calc(100vh - 120px);
 }
 
+
 /* 卡片样式 */
 .card {
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
@@ -113,6 +114,44 @@ header {
     border-color: #6d4c2a;
 }
 
+/* 繁简体转换按钮样式 */
+.results-area .card-header button { /* 确保样式只应用于卡片标题内的按钮 */
+    font-family: 'Noto Serif SC', serif;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid #f1e6d9; /* 初始边框颜色：白色 */
+    color: #f1e6d9; /* 初始文字颜色：白色 */
+    background-color: transparent; /* 初始背景：透明 */
+    transition: all 0.3s ease;
+    box-shadow: none; /* 移除初始阴影 */
+}
+
+.results-area .card-header button:hover,
+.results-area .card-header button:focus {
+    border-color: #8b5a2b; /* 鼠标悬停/焦点时边框颜色 */
+    color: #f1e6d9; /* 鼠标悬停/焦点时文字颜色 */
+    background-color: #8b5a2b; /* 鼠标悬停/焦点时背景色 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 鼠标悬停时阴影 */
+}
+
+.results-area .card-header button.active { /* 添加 .active 类来表示选中状态 */
+    border-color: #5d4037;  /* 选中时边框颜色 */
+    color: #f1e6d9;      /* 选中时文字颜色 */
+    background-color: #5d4037;  /* 选中时背景色 */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); /* 选中时内阴影 */
+}
+
+.results-area .card-header button + button {
+    margin-left: 0.5rem;
+}
+
+/* 调整 result-card 的 header 以确保按钮对齐 */
+.results-area .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 /* 文件选择按钮图标 */
 .scroll-icon {
     display: inline-block;
@@ -142,16 +181,66 @@ header {
     height: 100%;
 }
 
+/* Improved Rotation and Zoom Controls */
+.form-group {
+    margin-bottom: 1rem; /* Spacing between control groups */
+}
+
+.col-form-label {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+#rotationValue, #zoomValue {
+    display: inline-block;
+    width: 4em; /* Adjust as needed */
+    text-align: center;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.25rem;
+    font-size: 0.85rem;
+}
+
+/* 适应不同屏幕尺寸 */
+.form-range {
+    padding: 0; /* Reset default padding */
+}
+
+/* 调整滑块样式 */
+.form-range::-webkit-slider-thumb {
+    background-color: #8b5a2b;
+    border: none;
+    height: 1em;
+    width: 1em;
+    border-radius: 50%;
+    -webkit-appearance: none; /* Override default appearance */
+    margin-top: -0.25em; /* Center vertically */
+}
+
+/* Firefox */
+.form-range::-moz-range-thumb {
+    background-color: #8b5a2b;
+    border: none;
+    height: 1em;
+    width: 1em;
+    border-radius: 50%;
+    -moz-appearance: none;
+    margin-top: -0.25em;
+}
+
+
+/* 图片预览区域 */
 .image-container {
-    flex: 1;
-    overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f1e6d9;
-    border-radius: 5px;
-    position: relative;
-    border: 1px dashed #dfd3c3;
+    flex: 1; /* 占据剩余空间 */
+    overflow: auto; /* 允许内容滚动 */
+    display: flex;  /* 使用 Flexbox 布局 */
+    align-items: center; /* 垂直居中 */
+    justify-content: center; /* 水平居中 */
+    background-color: #f1e6d9; /* 背景色 */
+    border-radius: 5px; /* 圆角 */
+    position: relative; /* 相对定位 */
+    border: 1px dashed #dfd3c3; /* 虚线边框 */
 }
 
 .preview-image {
