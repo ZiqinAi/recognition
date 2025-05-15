@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
             rotationSlider.value = currentRotation; //  如果输入无效，则恢复到之前的角度
         }
     }
-    
+
     // 绑定旋转滑块事件
     rotationSlider.addEventListener('input', rotateImage);
 
@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             options.forEach(option => option.disabled = true);
         }
     });
+    
     
     // 执行OCR按钮点击事件
     executeOcrBtn.addEventListener('click', function() {
@@ -206,7 +207,14 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // 添加当前识别参数信息到日志
-        const versionText = version === 'default' ? '标准版本' : '古籍语序优化版本';
+        let versionText = '';
+        if (version === 'default') {
+            versionText = '标准版本';
+        } else if (version === 'beta') {
+            versionText = '语序优化版本';
+        } else if (version === 'baidu') {
+            versionText = '百度OCR';
+        }
         const detModeText = detMode === 'sp' ? '竖排' : (detMode === 'hp' ? '横排' : '自动');
         const detTypeText = charOcr ? '单字检测识别' : '文本行检测识别';
         
@@ -248,13 +256,26 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // 发送OCR请求
-        fetch('/api/ocr', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(ocrData)
-        })
+        let ocrPromise;
+        if (version === 'baidu') {
+            ocrPromise = fetch('/api/baidu_ocr', { // 百度OCR API路由
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(ocrData)
+            });
+        } else {
+            ocrPromise = fetch('/api/ocr', { // 基础的OCR路由
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(ocrData)
+            });
+        }
+
+        ocrPromise
         .then(response => response.json())
         .then(data => {
             // 移除加载指示器
