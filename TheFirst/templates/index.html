@@ -5,185 +5,530 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>孔子世家手写字识别 - 古籍文字辨识系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../static/style.css">
     <!-- 添加古籍风格字体 -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;700&family=Ma+Shan+Zheng&display=swap">
 </head>
 <body>
+    <!-- 顶部装饰条 -->
+    <div class="decoration-border"></div>
+    
     <div class="container-fluid">
-        <header class="text-center py-3">
-            <h2><span class="traditional-title">孔子世家文书手写字识别</span></h2>
-            <p class="header-subtitle">传统文献数字化工具</p>
+        <!-- 页面标题区域 -->
+        <header class="page-header">
+            <div class="header-ornament"></div>
+            <div class="header-content">
+                <h1 class="main-title">
+                    <span class="title-char">孔</span>
+                    <span class="title-char">子</span>
+                    <span class="title-char">世</span>
+                    <span class="title-char">家</span>
+                    <span class="title-separator">·</span>
+                    <span class="title-sub">手写字识别</span>
+                </h1>
+                <p class="subtitle">传统文献数字化工具 · 古籍文字智能辨识</p>
+            </div>
+            <div class="header-ornament"></div>
         </header>
         
-        <div class="row main-content">
-            <!-- 左侧设置区域 -->
-            <div class="col-md-3 settings-area">
-                <div class="card setting-card">
-                    <div class="card-header">识别设置</div>
-                    <div class="card-body">
-                        <form id="settingsForm">
-                            <!-- 上传文献按钮 -->
-                            <div class="mb-3">
-                                <button type="button" id="selectFileBtn" class="btn btn-primary w-100">
-                                    <i class="scroll-icon"></i> 上传文献图片
-                                </button>
-                                <input type="file" id="imageInput" accept="image/*" style="display: none;">
-                            </div>
-                            
-                            <!-- 默认图像按钮 -->
-                            <div class="mb-3">
-                                <button type="button" id="useDefaultImgBtn" class="btn btn-primary w-100">
-                                    <i class="scroll-icon"></i> 使用默认样例图像
-                                </button>
-                            </div>
-
-                            
-                            <div class="mb-3">
-                                <label for="versionSelect" class="form-label">识别版本:</label>
-                                <select class="form-select traditional-select" id="versionSelect">
-                                    <option value="default">基础版本</option>
-                                    <option value="beta">语序优化版本</option>
-                                    <option value="baidu">百度OCR【目前仅支持文字处理】</option>  </select>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="detModeSelect" class="form-label">文字排版方向:</label>
-                                <select class="form-select traditional-select" id="detModeSelect">
-                                    <option value="auto">自动检测</option>
-                                    <option value="sp">竖排</option>
-                                    <option value="hp">横排</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">检测模式:</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="detMode" id="charDetRadio" value="true" checked>
-                                    <label class="form-check-label" for="charDetRadio">单字检测识别</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="detMode" id="lineDetRadio" value="false">
-                                    <label class="form-check-label" for="lineDetRadio">文本行检测识别</label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="imageSizeInput" class="form-label">图片尺寸调节:</label>
-                                <input type="number" class="form-control" id="imageSizeInput" value="1024">
-                            </div>
-                            
-                            <!-- 图像预处理选项 -->
-                            <div class="mb-3">
-                                <div class="card sub-card">
-                                    <div class="card-header sub-header">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="preprocessToggle" checked>
-                                            <label class="form-check-label" for="preprocessToggle">开启图像增强</label>
-                                        </div>
+        <!-- 主导航标签 -->
+        <nav class="main-navigation">
+            <ul class="nav nav-tabs custom-tabs" id="mainTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-panel" type="button" role="tab">
+                        <i class="bi bi-cloud-upload"></i>
+                        <span class="tab-text">上传文献</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="process-tab" data-bs-toggle="tab" data-bs-target="#process-panel" type="button" role="tab">
+                        <i class="bi bi-gear-wide-connected"></i>
+                        <span class="tab-text">处理设置</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="result-tab" data-bs-toggle="tab" data-bs-target="#result-panel" type="button" role="tab">
+                        <i class="bi bi-file-text"></i>
+                        <span class="tab-text">识别结果</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-panel" type="button" role="tab">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="tab-text">历史记录</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- 标签内容区域 -->
+        <div class="main-content">
+            <div class="tab-content" id="mainTabsContent">
+                <!-- 上传文献面板 -->
+                <div class="tab-pane fade show active" id="upload-panel" role="tabpanel">
+                    <div class="panel-container">
+                        <div class="row g-4">
+                            <div class="col-lg-6">
+                                <div class="content-card upload-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-cloud-upload-fill"></i>
+                                        <span>文献上传</span>
                                     </div>
-                                    <div class="card-body" id="preprocessOptions">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input preprocess-option" type="checkbox" id="autoDeskewCheck" checked>
-                                            <label class="form-check-label" for="autoDeskewCheck">自动校正倾斜</label>
+                                    <div class="card-body">
+                                        <div class="upload-zone">
+                                            <div class="upload-buttons">
+                                                <button type="button" id="selectFileBtn" class="btn btn-primary btn-elegant">
+                                                    <i class="bi bi-file-earmark-image"></i>
+                                                    选择文献图片
+                                                </button>
+                                                <button type="button" id="useDefaultImgBtn" class="btn btn-outline-secondary btn-elegant">
+                                                    <i class="bi bi-collection"></i>
+                                                    使用默认样例
+                                                </button>
+                                                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                                            </div>
+                                            
+                                            <div id="uploadInfo" class="upload-info" style="display: none;">
+                                                <div class="info-content">
+                                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                                    <span>已选择：</span>
+                                                    <span id="selectedFileName" class="filename">未选择文件</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input preprocess-option" type="checkbox" id="contrastCheck" checked>
-                                            <label class="form-check-label" for="contrastCheck">增强对比度</label>
-                                        </div>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input preprocess-option" type="checkbox" id="noiseCheck" checked>
-                                            <label class="form-check-label" for="noiseCheck">降噪处理</label>
-                                        </div>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input preprocess-option" type="checkbox" id="sharpenCheck" checked>
-                                            <label class="form-check-label" for="sharpenCheck">锐化处理</label>
+                                        
+                                        <div class="log-section">
+                                            <div class="section-header">
+                                                <i class="bi bi-terminal"></i>
+                                                <span>运行日志</span>
+                                            </div>
+                                            <div id="logBox" class="log-container"></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <button type="button" id="executeOcrBtn" class="btn btn-success w-100" disabled>
-                                开始识别
-                            </button>
-                        </form>
+                            <div class="col-lg-6">
+                                <div class="content-card preview-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-image"></i>
+                                        <span>文献图片预览</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="image-preview-area">
+                                            <div id="imageContainer" class="image-container">
+                                                <img id="previewImage" class="preview-image" src="../static/images/placeholder.jpg" alt="预览图">
+                                                <div class="image-placeholder" style="display: none;">
+                                                    <i class="bi bi-image"></i>
+                                                    <p>暂无图片</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="image-controls">
+                                                <div class="control-group">
+                                                    <label class="control-label">
+                                                        <i class="bi bi-arrow-clockwise"></i>
+                                                        图像旋转
+                                                    </label>
+                                                    <div class="control-input">
+                                                        <input type="range" class="form-range custom-range" id="rotationSlider" min="0" max="360" value="0">
+                                                        <span id="rotationValue" class="control-value">0°</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="control-group">
+                                                    <label class="control-label">
+                                                        <i class="bi bi-zoom-in"></i>
+                                                        图像缩放
+                                                    </label>
+                                                    <div class="control-input">
+                                                        <input type="range" class="form-range custom-range" id="zoomSlider" min="20" max="200" value="100">
+                                                        <span id="zoomValue" class="control-value">100%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="card mt-3">
-                    <div class="card-header">运行日志</div>
-                    <div class="card-body">
-                        <div id="logBox" class="log-box"></div>
+                <!-- 处理设置面板 -->
+                <div class="tab-pane fade" id="process-panel" role="tabpanel">
+                    <div class="panel-container">
+                        <div class="row g-4">
+                            <div class="col-lg-6">
+                                <div class="content-card settings-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-sliders"></i>
+                                        <span>识别设置</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="settingsForm" class="settings-form">
+                                            <div class="form-group">
+                                                <label for="versionSelect" class="form-label">
+                                                    <i class="bi bi-cpu"></i>
+                                                    识别版本
+                                                </label>
+                                                <select class="form-select elegant-select" id="versionSelect">
+                                                    <option value="default">基础版本</option>
+                                                    <option value="beta">语序优化版本</option>
+                                                    <option value="baidu">百度OCR</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="detModeSelect" class="form-label">
+                                                    <i class="bi bi-text-paragraph"></i>
+                                                    文字排版方向
+                                                </label>
+                                                <select class="form-select elegant-select" id="detModeSelect">
+                                                    <option value="auto">自动检测</option>
+                                                    <option value="sp">竖排</option>
+                                                    <option value="hp">横排</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label class="form-label">
+                                                    <i class="bi bi-search"></i>
+                                                    检测模式
+                                                </label>
+                                                <div class="radio-group">
+                                                    <div class="form-check elegant-radio">
+                                                        <input class="form-check-input" type="radio" name="detMode" id="charDetRadio" value="true" checked>
+                                                        <label class="form-check-label" for="charDetRadio">
+                                                            单字检测识别
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check elegant-radio">
+                                                        <input class="form-check-input" type="radio" name="detMode" id="lineDetRadio" value="false">
+                                                        <label class="form-check-label" for="lineDetRadio">
+                                                            文本行检测识别
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="imageSizeInput" class="form-label">
+                                                    <i class="bi bi-aspect-ratio"></i>
+                                                    图片尺寸调节
+                                                </label>
+                                                <input type="number" class="form-control elegant-input" id="imageSizeInput" value="1024" min="512" max="2048" step="128">
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <div class="content-card preprocessing-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-image-alt"></i>
+                                        <span>图像预处理</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="preprocessing-options">
+                                            <div class="main-toggle">
+                                                <div class="form-check form-switch elegant-switch">
+                                                    <input class="form-check-input" type="checkbox" id="preprocessToggle" checked>
+                                                    <label class="form-check-label" for="preprocessToggle">
+                                                        <i class="bi bi-magic"></i>
+                                                        开启图像增强
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="preprocessOptions" class="preprocessing-details">
+                                                <div class="options-grid">
+                                                    <div class="form-check form-switch elegant-switch">
+                                                        <input class="form-check-input preprocess-option" type="checkbox" id="binarizeCheck" checked>
+                                                        <label class="form-check-label" for="binarizeCheck">
+                                                            <i class="bi bi-circle-half"></i>
+                                                            二值化处理
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check form-switch elegant-switch">
+                                                        <input class="form-check-input preprocess-option" type="checkbox" id="autoDeskewCheck" checked>
+                                                        <label class="form-check-label" for="autoDeskewCheck">
+                                                            <i class="bi bi-arrows-angle-contract"></i>
+                                                            自动校正倾斜
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check form-switch elegant-switch">
+                                                        <input class="form-check-input preprocess-option" type="checkbox" id="contrastCheck" checked>
+                                                        <label class="form-check-label" for="contrastCheck">
+                                                            <i class="bi bi-brightness-high"></i>
+                                                            增强对比度
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check form-switch elegant-switch">
+                                                        <input class="form-check-input preprocess-option" type="checkbox" id="noiseCheck" checked>
+                                                        <label class="form-check-label" for="noiseCheck">
+                                                            <i class="bi bi-shield-check"></i>
+                                                            降噪处理
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check form-switch elegant-switch">
+                                                        <input class="form-check-input preprocess-option" type="checkbox" id="sharpenCheck" checked>
+                                                        <label class="form-check-label" for="sharpenCheck">
+                                                            <i class="bi bi-diamond"></i>
+                                                            锐化处理
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="action-section">
+                                            <button type="button" id="executeOcrBtn" class="btn btn-success btn-execute" disabled>
+                                                <i class="bi bi-play-circle"></i>
+                                                开始识别
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- 中间图片显示区域 -->
-             <div class="col-md-5 image-area">
-                <div class="card h-100">
-                    <div class="card-header">文献图片预览</div>
-                    <div class="card-body image-viewer">
-
-                        <div id="imageContainer" class="image-container">
-                            <img id="previewImage" class="preview-image" src="../static/images/placeholder.jpg" alt="预览图">
-                        </div>
-                        
-                        <div class="form-group row align-items-center mb-2">
-                            <label for="rotationSlider" class="col-sm-3 col-form-label text-center">
-                                图像旋转:
-                            </label>
-                            <div class="col-sm-6">
-                                <input type="range" class="form-range" id="rotationSlider" min="0" max="360" value="0">
+                
+                <!-- 识别结果面板 -->
+                <div class="tab-pane fade" id="result-panel" role="tabpanel">
+                    <div class="panel-container">
+                        <div class="row g-4">
+                            <div class="col-lg-8">
+                                <div class="content-card result-card">
+                                    <div class="card-header">
+                                        <div class="header-left">
+                                            <i class="bi bi-file-text"></i>
+                                            <span>文本识别结果</span>
+                                        </div>
+                                        <div class="header-right">
+                                            <button type="button" class="btn btn-sm btn-outline-light conversion-btn" id="convertToTraditionalBtn" style="display: none;">
+                                                <i class="bi bi-translate"></i>
+                                                转繁体
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-light conversion-btn" id="convertToSimplifiedBtn" style="display: none;">
+                                                <i class="bi bi-translate"></i>
+                                                转简体
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="ocrResultBox" class="result-text-box">
+                                            <div class="empty-result">
+                                                <i class="bi bi-file-text"></i>
+                                                <p>识别结果将在此显示</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 在原有的助手卡片基础上，添加更多功能按钮 -->
+                                    <div class="content-card assistant-card mt-4">
+                                        <div class="card-header">
+                                            <i class="bi bi-robot"></i>
+                                            <span>古文文献助手 (DeepSeek AI)</span>
+                                            <div class="float-end">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearAssistantChatBtn" title="清除聊天记录">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="assistantChatHistory" class="chat-history-area mb-3" style="height: 280px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; background-color: #f8f9fa; border-radius: .25rem;">
+                                                <div class="chat-message assistant p-2 mb-2 rounded bg-primary text-white">
+                                                    <p class="mb-0"><strong>助手:</strong> 我是您的古文文献助手。您可以就上方识别出的文本内容向我提问，我会尽力为您解答。</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 快捷操作按钮 -->
+                                            <div class="mb-3">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-primary" id="analyzeTextBtn" title="分析识别的古文内容">
+                                                        <i class="bi bi-search"></i> 分析文本
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-info" id="translateTextBtn" title="翻译古文内容">
+                                                        <i class="bi bi-translate"></i> 翻译
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-success" id="explainTextBtn" title="解释文本含义">
+                                                        <i class="bi bi-question-circle"></i> 释义
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-warning" id="backgroundInfoBtn" title="获取历史背景信息">
+                                                        <i class="bi bi-clock-history"></i> 背景
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="input-group mb-3">
+                                                <input type="text" id="assistantQueryInput" class="form-control elegant-input" placeholder="向古文助手提问...">
+                                                <button class="btn btn-primary btn-elegant" type="button" id="sendToAssistantBtn">
+                                                    <i class="bi bi-send"></i> 发送
+                                                </button>
+                                            </div>
+                                            <div id="assistantStatus" class="form-text"></div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    助手功能由 DeepSeek API 提供。您可以使用上方的快捷按钮，或直接输入问题。
+                                                    请确保后端已正确配置 DeepSeek API 密钥。
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <div class="content-card processed-image-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-image"></i>
+                                        <span>处理后图像</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="processedImageContainer" class="processed-image-container">
+                                            <div class="processed-image-wrapper">
+                                                <img id="processedImage" class="processed-image" src="../static/images/placeholder.jpg" alt="处理后图像" style="display: none;">
+                                            </div>
+                                            <div class="empty-processed" id="noProcessedImage">
+                                                <i class="bi bi-image"></i>
+                                                <p>处理后的图像将在此显示</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="image-controls">
+                                            <div class="control-group">
+                                                <label class="control-label">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                    处理图旋转
+                                                </label>
+                                                <div class="control-input">
+                                                    <input type="range" class="form-range custom-range" id="processedRotationSlider" min="0" max="360" value="0">
+                                                    <span id="processedRotationValue" class="control-value">0°</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="control-group">
+                                                <label class="control-label">
+                                                    <i class="bi bi-zoom-in"></i>
+                                                    处理图缩放
+                                                </label>
+                                                <div class="control-input">
+                                                    <input type="range" class="form-range custom-range" id="processedZoomSlider" min="20" max="200" value="100">
+                                                    <span id="processedZoomValue" class="control-value">100%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-sm-3 text-center">
-                                <span id="rotationValue">0°</span>
-                            </div>
-                        </div>
-
-                        <div class="form-group row align-items-center">
-                            <label for="zoomSlider" class="col-sm-3 col-form-label text-center">
-                                图像缩放:
-                            </label>
-                            <div class="col-sm-6">
-                                <input type="range" class="form-range" id="zoomSlider" min="20" max="200" value="100">
-                            </div>
-                            <div class="col-sm-3 text-center">
-                                <span id="zoomValue">100%</span>
+                            
+                            <div class="col-lg-4">
+                                <div class="content-card detail-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-list-ul"></i>
+                                        <span>单字识别详情</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-container">
+                                            <table class="table table-hover elegant-table" id="ocrTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th><i class="bi bi-image"></i> 图像</th>
+                                                        <th><i class="bi bi-fonts"></i> 识别内容</th>
+                                                        <th><i class="bi bi-percent"></i> 置信度</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr class="empty-table">
+                                                        <td colspan="3" class="text-center text-muted">
+                                                            <i class="bi bi-inbox"></i>
+                                                            <p>暂无识别数据</p>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- 右侧OCR结果区域 -->
-            <div class="col-md-4 results-area">
-                <div class="card result-card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>识别结果</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="convertToTraditionalBtn" style="display: none;">转繁体</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="convertToSimplifiedBtn" style="display: none;">转简体</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div id="ocrResultBox" class="ocr-result-box"></div>
-                    </div>
-                </div>
-
-                <div class="card mt-3 result-card">
-                    <div class="card-header">单字识别详情</div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="ocrTable">
-                              <thead>
-                                <tr>
-                                  <th>图像</th>
-                                  <th>识别内容</th>
-                                  <th>置信度</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <!-- 动态填充OCR结果 -->
-                              </tbody>
-                            </table>
+                
+                <!-- 历史记录面板 -->
+                <div class="tab-pane fade" id="history-panel" role="tabpanel">
+                    <div class="panel-container">
+                        <div class="row g-4">
+                            <div class="col-lg-4">
+                                <div class="content-card history-list-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-clock-history"></i>
+                                        <span>历史识别记录</span>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="historyList" class="history-list">
+                                            <div class="empty-history" id="noHistoryMsg">
+                                                <i class="bi bi-clock"></i>
+                                                <p>暂无历史记录</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-8">
+                                <div class="content-card history-detail-card">
+                                    <div class="card-header">
+                                        <i class="bi bi-info-circle"></i>
+                                        <span>历史文献详情</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="history-detail-content">
+                                            <div class="row g-4">
+                                                <div class="col-md-12">
+                                                    <div class="history-image-section">
+                                                        <div id="historyImageContainer" class="history-image-container">
+                                                            <img id="historyImage" class="history-image" alt="历史图像" style="display: none;">
+                                                            <div class="empty-history-image" id="noHistoryImageSelected">
+                                                                <i class="bi bi-image"></i>
+                                                                <p>未选择历史记录</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="history-text-section">
+                                                        <h5 class="section-title">
+                                                            <i class="bi bi-file-text"></i>
+                                                            识别结果
+                                                        </h5>
+                                                        <div class="history-text-container">
+                                                            <pre id="historyText" class="history-text-content" style="display: none;"></pre>
+                                                            <div class="empty-history-text" id="noHistoryTextSelected">
+                                                                <i class="bi bi-file-text"></i>
+                                                                <p>未选择历史记录</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="history-actions">
+                                                            <button id="downloadHistoryBtn" class="btn btn-primary btn-elegant" style="display: none;"> <i class="bi bi-download"></i> 下载此文献
+                                                            </button>
+                                                            <button id="deleteHistoryBtn" class="btn btn-outline-danger btn-elegant" style="display: none;">
+                                                                <i class="bi bi-trash"></i>
+                                                                删除记录
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -193,18 +538,26 @@
     
     <!-- 图片查看弹窗 -->
     <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content elegant-modal">
                 <div class="modal-header">
-                    <h5 class="modal-title">图片查看</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-zoom-in"></i>
+                        图片查看
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center">
-                    <img id="modalImage" class="img-fluid" src="" alt="放大图片">
+                <div class="modal-body">
+                    <div class="modal-image-container">
+                        <img id="modalImage" class="modal-image" src="" alt="放大图片">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 底部装饰条 -->
+    <div class="decoration-border bottom"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../static/script.js"></script>
