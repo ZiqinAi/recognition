@@ -666,6 +666,7 @@ function downloadHistoryRecord() {
         initPreprocessOptions();
         resetImageTransform();
         fetchHistory();
+        loadApiConfig(); // 加载DeepSeek API配置
     }
 
     function initSettingsForm() {
@@ -705,6 +706,115 @@ function downloadHistoryRecord() {
     // 聊天记录缓存
     let assistantChatHistory = [];
 
+    // API配置
+    const apiConfig = {
+        apiUrl: 'https://api.deepseek.com/v1/chat/completions',
+        apiKey: 'sk-7b2df99b26754b0f898de550b980f529'
+    };
+
+    // 加载API配置
+    async function loadApiConfig() {
+        try {
+            const response = await fetch('/api/deepseek_config');
+            if (response.ok) {
+                const config = await response.json();
+                apiConfig.apiKey = config.api_key || '';
+            }
+        } catch (error) {
+            console.warn('无法加载DeepSeek API配置:', error);
+        }
+    }
+
+    // DeepSeek API调用函数
+    async function callDeepSeekAPI(messages, systemPrompt = '', streaming = false, onChunk = null) {
+        if (!apiConfig.apiKey) {
+            throw new Error('请先配置DeepSeek API Key');
+        }
+
+        const requestBody = {
+            model: "deepseek-chat",
+            messages: [
+                ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
+                ...messages
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+            stream: streaming
+        };
+
+        try {
+            const response = await fetch(apiConfig.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiConfig.apiKey}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+            }
+
+            if (streaming) {
+                return await handleStreamingResponse(response, onChunk);
+            } else {
+                const data = await response.json();
+                return data.choices[0].message.content;
+            }
+        } catch (error) {
+            console.error('API调用错误:', error);
+            throw error;
+        }
+    }
+
+    // 处理流式响应
+    async function handleStreamingResponse(response, onChunk = null) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullContent = '';
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // 保留可能不完整的最后一行
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine.startsWith('data: ')) {
+                        const data = trimmedLine.slice(6);
+                        
+                        if (data === '[DONE]') {
+                            return fullContent;
+                        }
+
+                        try {
+                            const parsed = JSON.parse(data);
+                            const delta = parsed.choices?.[0]?.delta?.content;
+                            
+                            if (delta) {
+                                fullContent += delta;
+                                if (onChunk) {
+                                    onChunk(delta);
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('解析流式数据失败:', e);
+                        }
+                    }
+                }
+            }
+            return fullContent;
+        } finally {
+            reader.releaseLock();
+        }
+    }
+
     function sendMessageToAssistant(message, context = '') {
         if (!message.trim()) {
             handleError('请输入您的问题或需求');
@@ -715,38 +825,141 @@ function downloadHistoryRecord() {
         assistantChatHistory.push(userEntry);
         updateAssistantChatUI();
 
+        // 创建助手消息占位符
+        const assistantEntry = { role: 'assistant', content: '' };
+        assistantChatHistory.push(assistantEntry);
+        updateAssistantChatUI();
+
         elements.assistantStatus.textContent = '正在分析中，请稍候...';
 
-        fetch('/api/assistant/chat', createFetchOptions('POST', {
-            message: message,
-            context_text: context,
-            conversation_history: assistantChatHistory
-        }))
-        .then(checkResponseStatus)
-        .then(response => response.json())
-        .then(data => {
-            elements.assistantStatus.textContent = '';
-            if (data.error) {
-                handleError(`智能助手响应异常: ${data.error}`);
-                return;
-            }
+        // 准备消息历史
+        const messages = assistantChatHistory.slice(0, -1).map(entry => ({
+            role: entry.role,
+            content: entry.content
+        }));
 
-            const assistantReply = { role: 'assistant', content: data.reply };
-            assistantChatHistory.push(assistantReply);
+        // 构建系统提示
+        let systemPrompt = '你是一个专业的古文文献助手，擅长分析、翻译和解释古代中文文献。';
+        if (context.trim()) {
+            systemPrompt += `\n\n当前需要分析的古文内容：\n${context}`;
+        }
+
+        // 调用DeepSeek API进行流式输出
+        callDeepSeekAPI(messages, systemPrompt, true, (delta) => {
+            // 流式更新回调
+            assistantEntry.content += delta;
+            updateAssistantChatUIStreaming();
+        })
+        .then(fullContent => {
+            elements.assistantStatus.textContent = '';
+            removeTypingCursor();
+            // 确保最终内容完整
+            assistantEntry.content = fullContent;
             updateAssistantChatUI();
         })
         .catch(error => {
             elements.assistantStatus.textContent = '';
-            handleFetchError(error);
+            // 移除失败的助手消息
+            assistantChatHistory.pop();
+            updateAssistantChatUI();
+            
+            if (error.message.includes('API Key')) {
+                handleError('DeepSeek API Key未配置或无效，请检查设置');
+            } else {
+                handleError(`智能助手响应异常: ${error.message}`);
+            }
         });
     }
 
+    // Markdown解析器
+    function parseMarkdownToHTML(markdown) {
+        if (!markdown) return '';
+        
+        return markdown
+            // 标题处理
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            
+            // 粗体和斜体
+            .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            
+            // 代码块和行内代码
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            
+            // 列表
+            .replace(/^\* (.*$)/gim, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+            
+            // 换行
+            .replace(/\n/g, '<br>')
+            
+            // 段落 (可选)
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/^(.*)$/gim, '<p>$1</p>');
+    }
+
+    // 流式更新聊天界面
+    function updateAssistantChatUIStreaming() {
+        const lastMessageDiv = elements.assistantChatHistory.lastElementChild;
+        if (lastMessageDiv && lastMessageDiv.classList.contains('assistant')) {
+            const lastEntry = assistantChatHistory[assistantChatHistory.length - 1];
+            
+            // 移除旧的光标
+            const oldCursor = lastMessageDiv.querySelector('.typing-cursor');
+            if (oldCursor) {
+                oldCursor.remove();
+            }
+            
+            // 解析Markdown并更新内容
+            lastMessageDiv.innerHTML = parseMarkdownToHTML(lastEntry.content);
+            
+            // 添加新的光标
+            const cursor = document.createElement('span');
+            cursor.className = 'typing-cursor';
+            cursor.textContent = '|';
+            lastMessageDiv.appendChild(cursor);
+            
+            // 自动滚动到底部
+            elements.assistantChatHistory.scrollTop = elements.assistantChatHistory.scrollHeight;
+        }
+    }
+
+    // 移除打字光标
+    function removeTypingCursor() {
+        const cursor = elements.assistantChatHistory.querySelector('.typing-cursor');
+        if (cursor) {
+            cursor.remove();
+        }
+    }
+
+    // 更新聊天界面
     function updateAssistantChatUI() {
         elements.assistantChatHistory.innerHTML = '';
-        assistantChatHistory.forEach(entry => {
+        assistantChatHistory.forEach((entry, index) => {
             const msgDiv = document.createElement('div');
             msgDiv.className = entry.role === 'user' ? 'chat-message user' : 'chat-message assistant';
-            msgDiv.textContent = entry.content;
+            
+            if (entry.role === 'assistant') {
+                // 解析Markdown并设置HTML
+                msgDiv.innerHTML = parseMarkdownToHTML(entry.content);
+            } else {
+                msgDiv.textContent = entry.content;
+            }
+            
+            // 只为空的助手消息添加光标
+            if (entry.role === 'assistant' && index === assistantChatHistory.length - 1 && 
+                entry.content === '') {
+                const cursor = document.createElement('span');
+                cursor.className = 'typing-cursor';
+                cursor.textContent = '|';
+                msgDiv.appendChild(cursor);
+            }
+            
             elements.assistantChatHistory.appendChild(msgDiv);
         });
         elements.assistantChatHistory.scrollTop = elements.assistantChatHistory.scrollHeight;
@@ -794,67 +1007,6 @@ function downloadHistoryRecord() {
     elements.backgroundInfoBtn.addEventListener('click', () => {
         sendMessageToAssistant('请提供这段古文的背景信息或出处。', originalOcrText);
     });
-    
-    // // 文本分析功能
-    // elements.analyzeTextBtn.addEventListener('click', () => {
-    //     const prompt = `请对以下古文进行深入分析：
-
-    // 1. 文体特征：判断文体类型（如散文、骈文、诗歌等）
-    // 2. 语言特色：分析用词、句式、修辞手法
-    // 3. 结构层次：梳理文章脉络和逻辑结构
-    // 4. 艺术特色：评析文学价值和艺术手法
-
-    // 请提供专业而易懂的分析。`;
-        
-    //     sendMessageToAssistant(prompt, originalOcrText);
-    // });
-
-    // // 翻译功能
-    // elements.translateTextBtn.addEventListener('click', () => {
-    //     const prompt = `请将以下古文翻译为现代汉语：
-
-    // 翻译要求：
-    // 1. 准确传达原文意思，不遗漏要点
-    // 2. 语言流畅自然，符合现代汉语表达习惯
-    // 3. 保持原文的语气和风格特色
-    // 4. 对于关键词汇，请在译文后用括号标注原文
-
-    // 请提供完整的现代汉语译文。`;
-        
-    //     sendMessageToAssistant(prompt, originalOcrText);
-    // });
-
-    // // 逐句解释功能
-    // elements.explainTextBtn.addEventListener('click', () => {
-    //     const prompt = `请对以下古文进行逐句详细解释：
-
-    // 解释内容包括：
-    // 1. 句子结构分析（主谓宾、定状补等）
-    // 2. 重点词汇释义（古今异义、一词多义等）
-    // 3. 语法现象说明（倒装、省略、活用等）
-    // 4. 句意理解和现代汉语表达
-
-    // 请按原文顺序，逐句进行详尽解释。`;
-        
-    //     sendMessageToAssistant(prompt, originalOcrText);
-    // });
-
-    // // 背景信息功能
-    // elements.backgroundInfoBtn.addEventListener('click', () => {
-    //     const prompt = `请提供以下古文的相关背景信息：
-
-    // 背景信息包括：
-    // 1. 作者简介：生平、地位、代表作品
-    // 2. 创作背景：写作时间、历史背景、创作缘由
-    // 3. 文献出处：出自哪部典籍或文集
-    // 4. 历史价值：在文学史上的地位和影响
-    // 5. 相关典故：涉及的历史事件、人物、典故
-
-    // 如无法确定具体出处，请说明可能的来源和相关信息。`;
-        
-    //     sendMessageToAssistant(prompt, originalOcrText);
-    // });
-
 
     init();
 });
